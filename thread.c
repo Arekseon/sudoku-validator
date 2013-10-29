@@ -148,11 +148,11 @@ int main(int argc, const char *argv[]) {
 	return 0;
 }
 
-void unlock_and_set_duplicate(a) {
+void unlock_and_set_duplicate(int a) {
 	
 	if (duplicate != TRUE)
 	{
-		while(_lock_duplicate) 
+		while(_lock_duplicate == TRUE) 
 		{
 			/* wait until resource is available */
 		}
@@ -182,13 +182,14 @@ void *runner(void *param) {
 			val1 = puz[initial][i];
 			for (j = 0; j < LENGTH; j++) {
 				val2 = puz[initial][j];
-				printf ("%d = %d ", val1, val2);
-				fflush(stdout);
 				if (val1 == val2) {		
 					/* if they do, set dupl to TRUE and break out of both loops */
-					printf("!(%d, %d) at (%d, %d) \n", val1, val2, i, j);
-					unlock_and_set_duplicate(TRUE);
-					break; break;
+					//if (i != j)
+					//{
+						printf("!(%d, %d) at (%d, %d) \n", val1, val2, i, j);fflush(stdout);
+						unlock_and_set_duplicate(TRUE);
+						break; break;
+						//}
 				}
 			
 			}
