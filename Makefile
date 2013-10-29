@@ -1,10 +1,9 @@
 CC = gcc
 LL = -lpthread
 C_FILES = thread.c
-EX_NAME = sudoku
 
 sudoku: $(C_FILES)
-	$(CC) $(C_FILES) $(LL) -o $(EX_NAME)
+	$(CC) $(C_FILES) $(LL) -o sudoku
 
 clean:
 	rm $(EX_NAME)

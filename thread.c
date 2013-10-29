@@ -24,7 +24,8 @@ static int *puz[LENGTH];
 /* Declare a variable for the last region which was tested */
 static int lastRegion = 0;
 
-static int duplicate; static int _lock_duplicate = FALSE;
+static int duplicate = FALSE;
+pthread_mutex_t lock;
 			
 /* segment_t is used to differentiate between row, column, and region. */
 typedef enum {
@@ -84,7 +85,9 @@ int main(int argc, const char *argv[]) {
 		puz[i] = (int *)malloc(sizeof(int) * LENGTH);
 	
 	/* read in the file and store the input */
-		read_file_and_set_puz(argv[FILE_PATH_ARG]);
+	read_file_and_set_puz(argv[FILE_PATH_ARG]);
+		
+	pthread_mutex_init(&lock, NULL);
 	
 	/* Creating NUM_THREADS Threads 
      *
@@ -131,6 +134,8 @@ int main(int argc, const char *argv[]) {
     for (i = 0; i < NUM_THREADS; i++)
          pthread_join(workers[i], NULL);
 	
+	pthread_mutex_destroy(&lock);
+	
 	if (duplicate == TRUE)
 	{
 		printf("Invalid Solution. A duplicate was found.\n");
@@ -148,25 +153,6 @@ int main(int argc, const char *argv[]) {
 	return 0;
 }
 
-void unlock_and_set_duplicate(int a) {
-	
-	if (duplicate != TRUE)
-	{
-		while(_lock_duplicate == TRUE) 
-		{
-			/* wait until resource is available */
-		}
-	
-		/* lock it */
-		_lock_duplicate = TRUE;
-		
-		duplicate = a;
-		
-		/* unlock it */
-		_lock_duplicate = FALSE;
-	}
-}
-
 /* Scans each item in a Designated area. Expects a void pointer with the row,
  * column or segment to test. Sets the pthread_value pointer to be 0 (FALSE)
  * if no duplicates are found.  Otherwise, it sets it to 1 (TRUE). */
@@ -182,77 +168,91 @@ void *runner(void *param) {
 			val1 = puz[initial][i];
 			for (j = 0; j < LENGTH; j++) {
 				val2 = puz[initial][j];
+				printf("(%d, %d) -> ", val1, val2);
 				if (val1 == val2) {		
 					/* if they do, set dupl to TRUE and break out of both loops */
-					//if (i != j)
-					//{
+					if (!(i == j))
+					{
 						printf("!(%d, %d) at (%d, %d) \n", val1, val2, i, j);fflush(stdout);
-						unlock_and_set_duplicate(TRUE);
+						pthread_mutex_lock(&lock);
+						duplicate = TRUE;
+						pthread_mutex_unlock(&lock);
 						break; break;
-						//}
+					}
 				}
 			
 			}
 		}
 	}
-	// else if (type == COLUMN) {
-// 		
-// 		for (i = 0; i < LENGTH; i++) {
-// 			oi = puz[initial+i];
-// 			oj = puz[initial];
-// 			for (j = 0; j < LENGTH; j++) {
-// 				oj = puz[initial+j];
-// 			
-// 				/* continue to the next test if it is the same element */
-// 				if (j != i) {
-// 				
-// 					/* otherwise, test if the values match */
-// 					if (*oi == *oj) {
-// 						/* if they do, set dupl to TRUE and break out of both loops */
-// 						printf("!(%d, %d) ", *oi, *oj);
-// 						dupl = TRUE;
-// 						break; break;
-// 					}
-// 				}
-// 			
-// 			}
-// 		}
-// 	}
-	// else /* assume REGION */ {
-// 		int subi = 0;
-// 		for (i = 0; i < LENGTH; i++) {
-// 			/* check to see if the current place is perfectly divisible by 3,
-// 			 * this would indicate that we need to move to the next row */
-// 			if (subi % ONE_THIRD_LENGTH == 0)
-// 			{
-// 				oi = puz[initial+(i / ONE_THIRD_LENGTH)];
-// 				oj = puz[initial];
-// 			}
-// 			/* otherwise, continue on the current row */
-// 			else
-// 			{
-// 				oi = puz[initial]+i;
-// 				oj = puz[initial];
-// 			}
-// 			for (j = 0; j < LENGTH; j++) {
-// 				oj = puz[initial] + j;
-// 			
-// 				/* continue to the next test if it is the same element */
-// 				if (j != i) {
-// 				
-// 					/* otherwise, test if the values match */
-// 					if (oi == oj) {
-// 						/* if they do, set dupl to TRUE and break out of both loops */
-// 						printf("!(%d, %d) ", *oi, *oj);
-// 						dupl = TRUE;
-// 						break; break;
-// 					}
-// 				}
-// 			
-// 			}
-// 			subi++;
-// 		}
-// 	}
+	else if (type == COLUMN) {
+		
+		for (i = 0; i < LENGTH; i++) {
+			val1 = puz[i][initial];
+			for (j = 0; j < LENGTH; j++) {
+				val2 = puz[j][initial];
+			
+				if (val1 == val2) {		
+					/* if they do, set dupl to TRUE and break out of both loops */
+					if (!(i == j))
+					{
+						printf("!(%d, %d) at (%d, %d) \n", val1, val2, i, j);fflush(stdout);
+						pthread_mutex_lock(&lock);
+						duplicate = TRUE;
+						pthread_mutex_unlock(&lock);
+						break; break;
+					}
+				}
+			
+			}
+		}
+	}
+	else /* assume REGION */ {
+		int k;
+		for (k = 0; k < ONE_THIRD_LENGTH; k++)
+		{
+			for (i = 0; i < ONE_THIRD_LENGTH; i++) {
+				val1 = puz[initial][i];
+				for (j = 0; j < ONE_THIRD_LENGTH; j++) {
+					val2 = puz[initial][j];
+			
+					if (val1 == val2) {		
+						/* if they do, set dupl to TRUE and break out of both loops */
+						if (!(i == j))
+						{
+							printf("!(%d, %d) at (%d, %d) \n", val1, val2, i, j);fflush(stdout);
+							pthread_mutex_lock(&lock);
+							duplicate = TRUE;
+							pthread_mutex_unlock(&lock);
+							break; break;
+						}
+					}
+			
+				}
+				
+				for (i = 0; i < ONE_THIRD_LENGTH; i++) {
+					val1 = puz[i][initial];
+					for (j = 0; j < ONE_THIRD_LENGTH; j++) {
+						val2 = puz[j][initial];
+			
+						if (val1 == val2) {		
+							/* if they do, set dupl to TRUE and break out of both loops */
+							if (!(i == j))
+							{
+								printf("!(%d, %d) at (%d, %d) \n", val1, val2, i, j);fflush(stdout);
+								pthread_mutex_lock(&lock);
+								duplicate = TRUE;
+								pthread_mutex_unlock(&lock);
+								break; break;
+							}
+						}
+			
+					}
+				}
+			}
+			
+		
+		}
+	}
 	
 	pthread_exit(FALSE);
 }
