@@ -1,0 +1,36 @@
+ _______  __   __  ______   _______  ___   _  __   __ 
+|       ||  | |  ||      | |       ||   | | ||  | |  |
+|  _____||  | |  ||  _    ||   _   ||   |_| ||  | |  |
+| |_____ |  |_|  || | |   ||  | |  ||      _||  |_|  |
+|_____  ||       || |_|   ||  |_|  ||     |_ |       |
+ _____| ||       ||       ||       ||    _  ||       |
+|_______||_______||______| |_______||___| |_||_______|
+                                             VALIDATOR  
+                                           by Ben Reed
+
+
+Compiling the Program:
+
+    Last semester, you showed me how to use a Makefile.
+    I have included one with this project, and the make tool
+    will compile it by default.
+        
+        $  make
+    
+    Will generate an executable output named `sudoku`.  =)
+    
+
+
+Running the Program:
+    
+    The file with the solution, such as sudoku.in, is meant to
+    be passed through a command line argument.  The syntax for
+    my program is:
+    
+        $  sudoku file.in
+        
+    The path to the input file must be relative to the location
+    from the directory which contains the executable or an
+    absolute path. It should execute as expected by evaluating
+    the solution provided within the file.
+    
